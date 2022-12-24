@@ -1,0 +1,1644 @@
+---
+title: "2005 y 2006. Las dos del Nano"
+description: |
+  Viaje en el tiempo repasando los dos años gloriosos de Fernando Alonso 
+author: Josep Gómez (gocojo@alumni.uv.es)  #--
+date: "`r Sys.Date()`"                  #--
+categories: [trabajo BigData, Formula1]   #--
+image: "./imagenes/Imagen_01.jpeg"
+title-block-banner: true #- {true, false, "green","#AA0000"}
+title-block-banner-color: "red"    #-"#FFFFFF" 
+toc: true
+toc-location: left
+toc-depth: 3
+smooth-scroll: true
+format: 
+  html:
+    #backgroundcolor: "#F1F3F4"
+    #standalone: true  
+    link-external-newwindow: true
+    #css: ./assets/my_css_file.css   #- CUIDADO!!!!
+code-tools: true
+code-link: true
+---
+
+<!--- Chunk para que la fuente sea la oficial de la Formula 1. La idea la he sacado de https://github.com/cayetano108/trabajo_BigData_equipo -->
+
+```{css, echo=FALSE}
+@font-face {
+  font-family: F1;
+  src: url(https://www.formula1.com/etc/designs/fom-website/fonts/F1Regular/Formula1-Regular.ttf);
+}
+
+span{
+  font-family: F1;
+}
+
+a{
+  font-family: F1;
+}
+
+.nav-pills>li.active>a:focus {
+    color: #ffffff;
+    background-color: lightgray;
+}
+
+.container-fluid, .container-fluid h1 {
+    font-family: F1;
+    line-height: 1.7;
+}
+
+.container-fluid p {
+    font-family: F1;
+    color:black;
+}
+
+h1,h2,h3,h4,h5,h6,p, table {
+  font-family: F1;
+  color: black
+}
+```
+
+```{r chunk-setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, message = FALSE, warning = FALSE, 
+                      #results = "hold",
+                      cache = FALSE, cache.path = "/caches/", comment = "#>",
+                      #fig.width = 7, #fig.height= 7,   
+                      #out.width = 7, out.height = 7,
+                      collapse = TRUE,  fig.show = "hold",
+                      fig.asp = 0.628, out.width = "75%", fig.align = "center")
+knitr::opts_chunk$set(dev = "png", dev.args = list(type = "cairo-png"))
+```
+
+```{r options-setup, include = FALSE}
+options(scipen = 999) #- para quitar la notación científica
+options("yaml.eval.expr" = TRUE) 
+```
+
+```{r klippy, echo = FALSE}
+klippy::klippy(position = c("top", "right")) #- remotes::install_github("rlesur/klippy")
+```
+
+<div style="text-align: justify">
+
+<div/>
+
+<hr class="linea-black">
+
+<!-- El párrafo de abajo has de dejarlo casi igual, solo HAS de SUSTITUIR "perezp44" por tu usuario de Github-->
+
+Trabajo elaborado para la asignatura "Programación y manejo de datos en la era del Big Data" de la Universitat de València durante el curso 2021-2022. El repo del trabajo está [aquí](https://github.com/gomezz01/my_trabajo_BigData){target="_blank"}.
+
+<!-- El párrafo de abajo has de dejarlo exactamente igual, NO has de cambiar nada-->
+
+La página web de la asignatura y los trabajos de mis compañeros pueden verse [aquí](https://perezp44.github.io/intro-ds-21-22-web/07-trabajos.html){target="_blank"}.
+
+<hr class="linea-red">
+
+<!--Libreria de paquetes -->
+
+```{r packages-setup, include = FALSE}
+library(tidyverse) #install.packages("tidyverse")
+library(sf) #install.packages("sf")
+library(DT) #install.packages("DT")
+library(ggThemeAssist) #install.packages("ggThemeAssist")
+library(patchwork) #install.packages("patchwork")
+library(plotly) #-install.packages("plotly")
+library(knitr) #install.packages("plotly")
+library(tibble) #install.packages("tibble")
+library(ggthemes) #install.packages("ggthemes)
+library(gganimate) #install.packages("gganimate")
+library(transformr) #install.packages("transformr")
+library(gghighlight) #install.packages("gghighlight")
+library(dplyr) #install.packages("dplyr")
+```
+
+
+# Introducción
+[Fernando Alonso Díaz](https://es.wikipedia.org/wiki/Fernando_Alonso){target="_blank"} es un piloto de automovilismo español, nacido en Oviedo el 29 de julio de 1981, campeón de varios títulos de competiciones bien diferentes, como El Campeonato Mundial de Resistencia de la FIA de 2019 o las 24h de Le Mans en 2018 y 2019, así como partícipe de varias categorías del automovilismo como son la IndyCar o el Rally de Dakar. No obstante, si por algo es conocido es por ser piloto de Fórmula 1, y no sólo por haber sido bicampeón del mundo en los años 2005 y 2006, sino por enamorar a millones de españoles a este deporte tan bonito.
+
+</center>![Qué clase tiene eh](./imagenes/Imagen_alo.png){width="600" height="400"}</center>
+
+Es por eso por lo que he decidido hacer este pequeño trabajo sobre él. Es un pequeño homenaje a las temporadas más bonitas para los aficionados españoles. Un viaje al pasado donde las gradas de los circuitos se fundían de los colores amarillo y azul, que curiosamente coincidían con la bandera de Asturias y del equipo Renault, y Fernando Alonso puso su nombre y el de toda una nación en lo más alto de la categoría reina del automovilismo.
+
+No obstante, he de decir que me planteé hacer este trabajo sobre otras dos temporadas. Alonso, para mí y muchos otros, no es sólo un bicampeón. Hace un tiempo leí que, si se le colocarán 10 puntos (sí, 10, y eso que a partir del 2010 el campeón de una carrera recibe 25 puntos y no 10 como antes) en ciertos momentos adecuados, seria pentacampeón. Una muestra de lo mal que ha tratado este deporte a nuestro piloto. No obstante, me parecía demasiado doloroso hacer un repaso a las temporadas 2010 y 2012, donde estuvimos a punto de vivir la épica viéndole luchar hasta los últimos suspiros de la temporada con el tercer o cuarto mejor coche por el campeonato. Dejo una pequeña muestra de lo que fue Fernando durante esas temporadas.
+
+<center>
+
+**EL EFECTO ALONSO**
+
+</center>![Épico](./imagenes/Imagen_1.jpg){width="400" height="400"}</center>
+
+Así pues, vayamos a analizar las temporadas 2005 y 2006, y veamos qué dificultades y en qué condiciones consiguió lograr sus dos títulos mundiales. 
+
+
+
+<br> 
+<br> 
+<br>
+
+
+
+# Datos
+Los datos que vamos a utilizar los obtenemos del dataset de esta [dirección]("https://www.kaggle.com/datasets/manabendrarout/f1-dataset-race-by-race-19502017){target="_blank"}. Como podemos observar, se trata de una base de datos bastante completa, con datos desde el primer año, 1950, y que incluye desde las vueltas rápidas o la posición de la parrila de salida, hasta los puntos acumulados en ambos campeonatos o el motivo de la retirada del piloto. 
+
+```{r, eval = TRUE, echo = FALSE}
+
+#Obtenemos el dataset de esta dirección "https://www.kaggle.com/datasets/manabendrarout/f1-dataset-race-by-race-19502017"
+#dir.create("datos")
+#dir.create("imagenes")
+ruta_via <- here::here("datos", "data_f1.csv")
+data_f1 <-rio::import(ruta_via)
+
+```
+
+Así pues, a medida que lo vayamos necesitando iremos adaptando los datos a nuestras necesidades, usando las erramientas de data mugging que hemos aprendido en clase. Una vez hecho este trabajo, usaremos las herramientas que nos ofrece ggplot y otros paquetes para facilitar la visualización de los datos seleccionados.
+
+<br> 
+<br> 
+<br>
+
+
+
+# 2005. La fiabilidad y Fernando contra Kimi y Newey
+2005 se planteaba como un año emocionante. Después de un largo periodo de dominio por parte de la escudería del Cavallino Rampante, parecía que Renault, y especialmente McLaren Mercedes, tenían un coche capaz de competir a la altura de los de Ferrari y plantarle cara al Káiser, Michael Schumacher. La máquina que utilizó esta temporada fue esta preciosidad llamada R25
+
+<center>
+
+**EL R25**
+
+</center>![Brutal](./imagenes/Imagen_2.jpg){width="600" height="400"}</center>
+
+
+<br> 
+<br> 
+
+
+## Campeonato de pilotos 
+En primer lugar, observaremos dos gráficos evolutivos que mostrarán el progreso de cada piloto a lo largo del campeonato. 
+
+<br> 
+
+
+
+```{r, eval = TRUE, echo = FALSE}
+#TEMPORADA 2005
+
+##Pilotos
+
+#En primer lugar, filtraremos el dataset para filtrar los datos de la temporada 2005 y nos quedaremos con aquellos parámetros que más nos interesen
+
+data_2005 <- data_f1 %>%
+  filter(Year == "2005") %>%
+  select(Year, Round, `GP Name`, Driver, `Driver Nationality`, Constructor, grid, positionText, positionOrder, points, time, fastestLapTime, rank, Status, `Cumulative points`, `Cumulative Constructor points`, `Constructor Rank`) %>%
+  arrange(Round)
+
+
+#Gráfico con la evolución de los pilotos a lo largo de la temporada
+
+g1 <- data_2005 %>%
+  ggplot(aes(x = Round, y = `Cumulative points`, color = Driver))+
+  geom_line(linewidth = 1)+
+  geom_point(aes(group = seq_along(Round)), size = 2)+
+  scale_color_manual(values= c("#0ac6f4", "#ea2634", "#545f75", "#151c33", "#747d82", "#de1922", "#62b2bb", "#fffdfe", "#283955", "#fcdf55", "#0ac6f4", "#ea2634", "#545f75", "#151c33", "#747d82", "#de1922", "#62b2bb", "#fffdfe", "#283955", "#fcdf55", "#747d82", "#fffdfe", "#151c33","#747d82", "#545f75","#de1922", "#283955"),
+                     labels = c("ALONSO",
+                                "BARRICHELLO",
+                                "COULTHARD",
+                                "WEBBER",
+                                "MONTOYA",
+                                "TRULLI",
+                                "MASSA",
+                                "BUTTON",
+                                "FRIESACHER",
+                                "MONTEIRO",
+                                "FISICHELLA",
+                                "MICHAEL_SCHUMACHER",
+                                "KLIEN",
+                                "HEIDFELD",
+                                "RAIKKONEN",
+                                "RALF_SCHUMACHER",
+                                "VILLENEUVE",
+                                "SATO",
+                                "ALBERS",
+                                "KARTHIKEYAN",
+                                "ROSA",
+                                "DAVIDSON",
+                                "PIZZONIA",
+                                "WURZ",
+                                "LIUZZI",
+                                "ZONTA",
+                                "DOORNBOS"))+
+  
+  #Los segmentos que van a unir nuestras líneas con las anotaciones:
+  geom_segment(aes(xend = 19, yend = `Cumulative points`),
+               linetype = 2, colour = 'grey') +
+  
+  #Las anotaciones:
+  geom_text(aes(label = Driver), hjust = 0)+
+  guides(color = "none")+
+  scale_x_continuous(breaks = seq(1, 19, by = 1),
+                     limits = c(1, 19))+
+  xlab("")+
+  ylab("")+
+  ggtitle("Evolución del campeonato de pilotos 2005",
+          subtitle = "Puntos totales por piloto")+
+  theme_minimal()+
+  
+  #Agrandando el texto para adaptarlo al gif:
+  
+  theme(plot.title = element_text(size = 15),
+        plot.subtitle = element_text(size = 12),
+        axis.text.x = element_text(size = 10),
+        plot.caption = element_text(size = 10, color = "grey40")) +
+  
+  #Animación:
+  
+  transition_reveal(Round)+
+  coord_cartesian(clip = 'off') +
+  enter_fade() +
+  exit_shrink()+
+  view_follow()
+
+#Animando el objeto de ggplot:
+
+animate(g1)
+
+```
+
+<br> 
+
+Como podemos observar, al final del campeonato fue Alonso quién se proclamó campeón. De hecho, lo hizo cuando todavía quedaban 2 carreras por disputarse, lo que recalca la gran diferencia que tenía el piloto español respecto a sus rivales. 
+
+<br> 
+
+
+```{r, eval = TRUE, echo = FALSE}
+#También haremos uno estático
+g2 <- data_2005 %>%
+  ggplot(aes(x = Round, y = `Cumulative points`, color = Driver))+
+  geom_line(linewidth = 1)+
+  geom_point(aes(group = seq_along(Round)), size = 2)+
+  scale_color_manual(values= c("#0ac6f4", "#ea2634", "#545f75", "#151c33", "#747d82", "#de1922", "#62b2bb", "#fffdfe", "#283955", "#fcdf55", "#0ac6f4", "#ea2634", "#545f75", "#151c33", "#747d82", "#de1922", "#62b2bb", "#fffdfe", "#283955", "#fcdf55", "#747d82", "#fffdfe", "#151c33","#747d82", "#545f75","#de1922", "#283955"),
+                     labels = c("ALONSO",
+                                "BARRICHELLO",
+                                "COULTHARD",
+                                "WEBBER",
+                                "MONTOYA",
+                                "TRULLI",
+                                "MASSA",
+                                "BUTTON",
+                                "FRIESACHER",
+                                "MONTEIRO",
+                                "FISICHELLA",
+                                "MICHAEL_SCHUMACHER",
+                                "KLIEN",
+                                "HEIDFELD",
+                                "RAIKKONEN",
+                                "RALF_SCHUMACHER",
+                                "VILLENEUVE",
+                                "SATO",
+                                "ALBERS",
+                                "KARTHIKEYAN",
+                                "ROSA",
+                                "DAVIDSON",
+                                "PIZZONIA",
+                                "WURZ",
+                                "LIUZZI",
+                                "ZONTA",
+                                "DOORNBOS")) +
+  gghighlight::gghighlight(Driver %in% c("ALONSO", "RAIKKONEN", "MICHAEL_SCHUMACHER", "FISICHELLA", "MONTOYA"))+
+  guides(color = "none")+
+  scale_x_continuous(breaks = seq(1, 19, by = 1),
+                     limits = c(1, 19))+
+  xlab("")+
+  ylab("")+
+  ggtitle("Evolución del campeonato de pilotos 2005",
+          subtitle = "Puntos totales por piloto")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 15),
+        plot.subtitle = element_text(size = 12),
+        axis.text.x = element_text(size = 10),
+        plot.caption = element_text(size = 10, color = "grey40")) +
+  theme_classic() 
+
+
+ggplotly(g2)
+```
+
+
+<br> 
+
+
+En el segundo gráfico vemos destacados solamente los 5 pilotos con más puntuaje al final de la temporada. Nos centraremos uno por uno para ver cuáles fueron las diferencias y los hechos ocurridos que acabaron llevando a Fernando a ser el campeón, y no a los demás pilotos. Evidentemente repararemos más en el caso de Kimi dado que fue el que más disputo el campeonato.
+
+<br> 
+
+
+### Fisichella i el [“C’mon mate Fernando is faster than you”](https://www.youtube.com/watch?v=AFVRoH9nUtI){target="_blank"}
+Las comparaciones con tu compañero de equipo en F1 son odiosas, porque te están comparando directamente con un tío que lleva exactamente la misma maquinaria que tú, y aquí solo cuentan las manos. Veremos unos pocos gráficos y una tabla para ilustrar las diferencias entre las temporadas de ambos pilotos.
+
+<br>
+
+
+
+```{r, eval = TRUE, echo = FALSE}
+###Fisichella
+FyF_2005 <- data_2005 %>%
+  filter(Driver %in% c("FISICHELLA", "ALONSO"))
+
+
+#En primer lugar haremos un gráfico de barras comparando el número de veces en qué han quedado en cada posición
+
+g3 <- ggplot(FyF_2005) +
+  aes(x = positionOrder, colour = Driver) +
+  geom_histogram(bins = 30L, fill = "#112446") +
+  scale_color_manual(
+    values = c(ALONSO = "#00FFEF",
+               FISICHELLA = "#F0F921")
+  ) +
+  labs(
+    x = "Posición en carrera",
+    y = "Número de veces que se consiguió ese resultlado",
+    title = "Comparación de resultados en carrera entre Fisichella y Alonso",
+    subtitle = "Temporada 2005"
+  ) +
+  theme_classic()
+
+g3
+
+```
+
+<br> 
+
+Como podemos observar en el primer gráfico, Fernando fue mucho más consistente a lo largo de la temporada que Fisichella. Se puede observar la gran diferencia de primeros y segundos puestos conseguidos por el asturiano, mientras que Fisichella dominó más en la zona de media tabla, pero muy habitualmente fuera del podio. Y una de las claves para conseguir el campeonato es la constancia en los primeros puestos de los grandes premios.
+
+<br> 
+
+
+```{r, eval = TRUE, echo = FALSE}
+#Gráfico marcando las diferencias de tiempo en cada circuito
+
+g4 <- FyF_2005 %>%
+  filter(Status %in% c("Finished", "+
+1 Lap")) %>%
+  ggplot() +
+  aes(x = Round, y = fastestLapTime, colour = Driver) +
+  geom_boxplot(fill = "#112446") +
+  scale_color_manual(
+    values = c(ALONSO = "#00F4FF",
+               FISICHELLA = "#FFE709")) +
+  labs(
+    x = "Carrera",
+    y = "Tiempo de vuelta rápida en carrera",
+    title = "Diferencia de tiempo de vuelta rápida entre Fisichella y Alonso",
+    subtitle = "Temporada 2005") +
+  theme_bw()
+
+g4
+
+```
+
+<br> 
+
+```{r, eval = TRUE, echo = FALSE}
+#Tabla para ver las diferencias de tiempos
+
+t1 <- FyF_2005 %>%
+  select(`GP Name`, Driver, fastestLapTime) %>%
+  filter(!`GP Name` %in% c("United States Grand Prix")) %>% 
+  pivot_wider(names_from = Driver, values_from = fastestLapTime) %>%
+  dplyr::relocate(FISICHELLA, .after = ALONSO) #%>%
+#mutate(ALONSO = as.(ALONSO)) %>%
+#mutate(FISICHELLA = as.(FISICHELLA)) %>%
+#mutate(Diferencia_tiempo = ALONSO-FISICHELLA)
+
+DT::datatable(t1)
+
+```
+
+<br> 
+
+
+La explicación de este hecho se ve tanto en el segundo gráfico como en la tabla. Cuando hablamos de las manos del piloto, es aquí donde se notan. Lo ideal sería comparar la media del tiempo de todas las vueltas de cada circuito. No obstante, como no contamos con todos los datos, compararemos las vueltas más rápidas en carrera. Y como vemos, Fisichella es en prácticamente todos los circuitos mucho más lento que Fernando. Y esto nos deja entrever que el asturiano consiguió exprimir mucho mejor el R25 que su compañero, lo cual llega a explicar llegar siempre a posiciones más elevadas en carrera que el italiano. 
+
+Por tanto, todo y que Giancarlo llegó a abandonar en más casos (en algunos casos por problemas y en otros por accidentes), la realidad es que esta temporada no estuvo a la altura de Alonso.
+
+
+<br> 
+
+
+### La no-temporada del Káiser
+Michael Schumacher venia de coronarse como heptacampeón la temporada 2004, después de 4 o 5 temporadas seguidas de dominio incontestable. No obstante, este año empezó con muchos problemas. El coche del 2005 no estuvo preparado hasta que pasaron unas carreras, por tanto, tuvieron que correr una parte de la temporada con el coche anterior. Y una vez llegó el nuevo coche no dio el rendimiento esperado. Fue una temporada para olvidar.
+
+Aún así, no se debe desprestigiar al alemán, dado que todo y los grandes inconvenientes consiguió quedar tercero con un coche que no estuvo a la altura de sus habilidades. Veremos brevemente como Schumacher sobrepilotó este coche comparándolo con su compañero Barrichello, dando una muestra de que seguía en plena forma para luchar al año siguiente por el campeonato. También veremos la falta de fiabilidad en los coches.
+
+<br> 
+
+
+```{r, eval = TRUE, echo = FALSE}
+###Schumacher
+SyB_2005 <- data_2005 %>%
+  filter(Driver %in% c("BARRICHELLO", "MICHAEL_SCHUMACHER"))
+
+
+#En primer lugar haremos un gráfico de barras comparando el número de veces en qué han quedado en cada posición
+
+g5 <- ggplot(SyB_2005) +
+  aes(x = positionOrder, colour = Driver) +
+  geom_histogram(bins = 30L, fill = "#112446") +
+  scale_color_manual(
+    values = c(MICHAEL_SCHUMACHER = "red",
+               BARRICHELLO = "black")
+  ) +
+  labs(
+    x = "Posición en carrera",
+    y = "Número de veces que se consiguió ese resultlado",
+    title = "Comparación de resultados en carrera entre Schumacher y Barrichello",
+    subtitle = "Temporada 2005"
+  ) +
+  theme_classic()
+
+g5
+
+```
+
+<br> 
+
+```{r, eval = TRUE, echo = FALSE}
+#Gráfico marcando las diferencias de tiempo en cada circuito
+
+g6 <- SyB_2005 %>%
+  filter(Status %in% c("Finished", "+ 1 Lap")) %>%
+  ggplot() +
+  aes(x = Round, y = fastestLapTime, colour = Driver) +
+  geom_boxplot(fill = "#112446") +
+  scale_color_manual(
+    values = c(MICHAEL_SCHUMACHER = "red",
+               BARRICHELLO = "black")
+  ) +
+  labs(
+    x = "Carrera",
+    y = "Tiempo de vuelta rápida en carrera",
+    title = "Diferencia de tiempo de vuelta rápida entre Schumacher y Barrichello",
+    subtitle = "Temporada 2005") +
+  theme_bw()
+
+g6
+
+```
+
+<br> 
+
+
+### Kimi, Newey y McLaren: ¿injustos no campeones?
+El título de pilotos acabó decantándose al largo de la temporada para Alonso. Hemos viso que se impuso en el liderato del campeonato desde la segunda carrera y que nadie fue capaz de bajarle de ahí. No obstante, lo que queríamos ver en este trabajo era si realmente tenía el coche más rápido. Y es aquí donde entra en escena McLaren.
+
+Raikkonen, que posteriormente también se proclamaría campeón del mundo, llegó a la temporada 2005 con no otra intención que llevarse el campeonato después de varios intentos fallidos ante la maquinaria de Ferrari y el Káiser. Para ello contaba con la ayuda de quien sea, probablemente, uno de los ingenieros más brillantes y apasionados por la F1 de los últimos tiempos. [Adrian Newey](https://es.wikipedia.org/wiki/Adrian_Newey){target="_blank"}, actualmente en Red Bull, y probablemente uno de los principales culpables de los títulos que tiene esa escudería (los 6 de pilotos y 5 de constructores los han ganado estando él en el equipo) fue el ingeniero que diseñó el MP4-20. Para que entendáis brevemente como de loco está, admitió una vez que dormía con una libreta al lado de la cama porque muchas noches se despertaba con ideas y se ponía a anotarlas.
+
+A continuación, veremos una comparación de tiempos de vuelta entre los 4 pilotos de ambas escuderías para ver qué diferencias veíamos en los tiempos.
+
+
+<br> 
+
+```{r, eval = TRUE, echo = FALSE}
+##Kimi
+FyFyKyM_2005 <- data_2005 %>%
+  filter(Driver %in% c("FISICHELLA", "ALONSO", "MONTOYA", "RAIKKONEN"))
+
+#Gráfico marcando las diferencias de tiempo en cada circuito
+g7 <- FyFyKyM_2005 %>%
+  ggplot() +
+  aes(x = Round, y = fastestLapTime, colour = Driver) +
+  geom_boxplot(fill = "#112446") +
+  scale_color_manual(
+    values = c(ALONSO = "#00FFEF",
+               FISICHELLA = "#F0F921",
+               MONTOYA = "grey",
+               RAIKKONEN = "black")
+  ) +
+  labs(
+    x = "Carrera",
+    y = "Tiempo de vuelta rápida en carrera",
+    title = "Diferencia de tiempo entre los pilotos de Renault y McLaren",
+    subtitle = "Temporada 2005") +
+  theme_bw()
+
+g7
+
+```
+
+<br> 
+
+
+Como podemos observar, los tiempos están muy igualados en ambas escuderías, e incluso podemos afirmar que en muchos casos los tiempos del McLaren, especialmente del de Kimi, estaban por delante del de los Renault. Por tanto, podemos afirmar que el coche británico era más veloz que el francés.
+
+Entonces, si se trataba de una batalla tan igualada, qué pasó para que Fernando se llevase la victoria y no Kimi. Esto claro, sabiendo que ambos son excelentes pilotos capaces de competir cara a cara y logrando resultados muy similares. Veamos los resultados para ambos pilotos. 
+
+<br> 
+
+
+```{r, eval = TRUE, echo = FALSE}
+#Gráfico comparando los resultados entre Kimi y Alonso
+FyK_2005 <- data_2005 %>%
+  filter(Driver %in% c("ALONSO","RAIKKONEN"))
+
+g8 <- ggplot(FyK_2005) +
+  aes(x = positionOrder, colour = Driver) +
+  geom_histogram(bins = 30L, fill = "#112446") +
+  scale_color_manual(
+    values = c(ALONSO = "#00FFEF",
+               RAIKKONEN = "white")
+  ) +
+  labs(
+    x = "Posición en carrera",
+    y = "Número de veces que se consiguió ese resultlado",
+    title = "Comparación de resultados en carrera entre Raikkonen y Alonso",
+    subtitle = "Temporada 2005"
+  ) +
+  theme_classic()
+
+g8
+
+```
+
+
+<br> 
+
+
+Como podemos observar, también hay máxima igualdad en los resultados, al menos en los de los primeros lugares de la parrilla. Por tanto, ¿qué fue lo que marcó las diferencias entre estos dos pilotos? Veámoslo en el siguiente gráfico.
+
+
+<br> 
+
+```{r, eval = TRUE, echo = FALSE}
+#Gráfico comparando los retiros entre Kimi y Alonso
+FyK_1 <- FyK_2005 %>%
+  pivot_wider(names_from = Driver, values_from = Status) %>%
+  count(ALONSO) %>%
+  na.omit()
+
+FyK_2 <- FyK_2005 %>%
+  pivot_wider(names_from = Driver, values_from = Status) %>%
+  count(RAIKKONEN) %>%
+  na.omit()
+
+g9 <- ggplot(FyK_1) +
+  aes(x = ALONSO, y = n) +
+  geom_col(fill = "#00E3FF") +
+  labs(
+    x = "Estatus final carrera",
+    y = "Numero de veces",
+    title = "Resultados finales de Alonso",
+    subtitle = "Temporada 2005"
+  ) +
+  theme_classic()
+
+g10 <- ggplot(FyK_2) +
+  aes(x = RAIKKONEN, y = n) +
+  geom_col(fill = "black") +
+  labs(
+    x = "Estatus final carrera",
+    y = "Numero de veces",
+    title = "Resultados finales de Raikkonen",
+    subtitle = "Temporada 2005"
+  ) +
+  theme_classic()
+
+g11 <- (g9 | g10)
+
+g11
+
+
+```
+
+<br> 
+
+
+
+Lo que vemos es que Alonso ha acabado dos carreras más que Raikkonen, por tanto, podemos decir ante la igualdad de resultados vista anteriormente que la falta de fiabilidad del McLaren le pesó mucho a Kimi en la lucha por el campeonato. Y, además, sabiendo que en varias ocasiones se tuvo que retirar mientras marchaba primero o en los primeros puestos de la carrera, y en casos como el de Nurburgring, tan extremo como perder la carrera en la última vuelta mientras lideraba. [Vídeo del accidente](https://www.youtube.com/watch?v=BZvX_khnfd4){target="_blank"}, minuto 7:20
+
+Esto tiene una explicación, y es que como hemos comentado, Newey diseñó un coche rapidísimo, el más rápido de la parrilla, pero como admitieron en el equipo, era tan veloz que forzaba demasiado las otras características del coche, como el motor o las suspensiones, y esto les hacía fallar. Así, los fallos mecánicos del coche no permitieron alcanzar la gloria al equipo inglés. No sería hasta 5 años después, una vez ya en Red Bull, cuando se solucionarían los problemas de fiabilidad y un coche de Newey conseguiría ser campeón. 
+
+<br> 
+
+
+### Conclusiones de la temporada de pilotos
+Como hemos visto, varios factores fueron los que llevaron en esta temporada a Fernando a ser campeón. El primero de ellos fueron sus manos, y su capacidad para sacarle el máximo rendimiento a su monoplaza. El segundo fue la constancia para quedar siempre en las primeras posiciones de cada gran premio y minimizar daños cuando eran sus rivales los que quedaban por delante. Dos características que el hicieron destacar por encima de su compañero Fisichella.
+
+El segundo fue un probablemente coche ganador. No era el más rápido de la parrilla, como hemos visto, pero desde luego el más fiable de los que lucharon por el campeonato. Y, como dicen los comentaristas Gonzalo Serrano, Antonio Lobato y Pedro de la Rosa, las temporadas no las gana siempre el más rápido, sino el más constante. Además, otra cosa que estos comentaban es la suerte del campeón. Y, desde luego, Fernando contó con ella cuando Kimi la sufría, con sus nombrosos fallos inoportunos. 
+
+<br> 
+<br> 
+
+
+## Campeonato de constructores
+A continuación, veremos brevemente los resultados del campeonato de constructores, dado que a partir de los hechos de los pilotos ya nos imaginamos qué pasó también en este campeonato. A pesar de que la clasificación en este es el que determina el dinero recibido por cada equipo, siempre acaba quedándose en un lugar secundario, aunque siempre honra a los pilotos decir que ganaron ambos títulos cuando son campeones del mundo de pilotos.
+
+Primero la evolución de los puntos al largo de la temporada por escuderías. Uno dinámico:
+
+<br> 
+
+
+```{r, eval = TRUE, echo = FALSE}
+#CONSTRUCTORES
+
+#Gráfico con la evolución de los constructores a lo largo de la temporada
+
+g12 <- data_2005 %>%
+  ggplot(aes(x = Round, y = `Cumulative Constructor points`, color = Constructor))+
+  geom_line(linewidth = 1)+
+  geom_point(aes(group = seq_along(Round)), size = 2)+
+  scale_color_manual(values= c("#40c6fe", "#ea2634", "#545f75", "#151c33", "#747d82", "#de1922", "#62b2bb", "#fffdfe", "#283955", "#fcdf55"),
+                     labels = c("Renault",
+                                "Ferrari",
+                                "Red Bull",
+                                "Williams",
+                                "McLaren",
+                                "Toyota",
+                                "Sauber",
+                                "BAR",
+                                "Minardi",
+                                "Jordan"))+
+  
+  #Los segmentos que van a unir nuestras líneas con las anotaciones:
+  geom_segment(aes(xend = 19, yend = `Cumulative Constructor points`),
+               linetype = 2, colour = 'grey') +
+  
+  #Las anotaciones:
+  geom_text(aes(label = Constructor), hjust = 0)+
+  guides(color = "none")+
+  scale_x_continuous(breaks = seq(1, 19, by = 1),
+                     limits = c(1, 19))+
+  xlab("")+
+  ylab("")+
+  ggtitle("Evolución del campeonato de constructores 2005",
+          subtitle = "Puntos totales por constructor")+
+  theme_minimal()+
+  
+  #Agrandando el texto para adaptarlo al gif:
+  
+  theme(plot.title = element_text(size = 15),
+        plot.subtitle = element_text(size = 12),
+        axis.text.x = element_text(size = 10),
+        plot.caption = element_text(size = 10, color = "grey40")) +
+  
+  #Animación:
+  
+  transition_reveal(Round)+
+  coord_cartesian(clip = 'off') +
+  enter_fade() +
+  exit_shrink()+
+  view_follow()
+
+#Animando el objeto de ggplot:
+
+animate(g12)
+
+```
+
+<br> 
+
+```{r, eval = TRUE, echo = FALSE}
+#También haremos uno estático
+g13 <- data_2005 %>%
+  ggplot(aes(x = Round, y = `Cumulative Constructor points`, color = Constructor))+
+  geom_line(linewidth = 1)+
+  geom_point(aes(group = seq_along(Round)), size = 2)+
+  scale_color_manual(values= c("#40c6fe", "#ea2634", "#545f75", "#151c33", "#747d82", "#de1922", "#62b2bb", "#fffdfe", "#283955", "#fcdf55"),
+                     labels = c("Renault",
+                                "Ferrari",
+                                "Red Bull",
+                                "Williams",
+                                "McLaren",
+                                "Toyota",
+                                "Sauber",
+                                "BAR",
+                                "Minardi",
+                                "Jordan")) +
+  gghighlight::gghighlight(Constructor %in% c("Renault", "Ferrari", "McLaren"))+
+  guides(color = "none")+
+  scale_x_continuous(breaks = seq(1, 19, by = 1),
+                     limits = c(1, 19))+
+  xlab("")+
+  ylab("")+
+  ggtitle("Evolución del campeonato de constructores 2005",
+          subtitle = "Puntos totales por constructor")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 15),
+        plot.subtitle = element_text(size = 12),
+        axis.text.x = element_text(size = 10),
+        plot.caption = element_text(size = 10, color = "grey40")) +
+  theme_classic() 
+
+
+ggplotly(g13)
+
+```
+
+<br> 
+
+
+
+Como podemos ver, la disputa del campeonato estuvo muy reñida entre McLaren y Renault. De hecho, hasta la última carrera no se decidió el campeonato. 
+
+Ahora veremos una comparación de los resultados de carrera entre estos dos equipos, así como de las carreras terminadas y no terminadas. 
+
+<br> 
+
+
+```{r, eval = TRUE, echo = FALSE}
+#Gráfico de los resultados de carrera
+
+#Gráfico comparando los resultados entre Renault y McLaren
+MyR_2005 <- data_2005 %>%
+  filter(Constructor %in% c("Renault","McLaren"))
+
+g14 <- ggplot(MyR_2005) +
+  aes(x = positionOrder, colour = Constructor) +
+  geom_histogram(bins = 30L, fill = "#112446") +
+  scale_color_manual(
+    values = c(Renault = "#00FFEF",
+               McLaren = "red")
+  ) +
+  labs(
+    x = "Posición en carrera",
+    y = "Número de veces que se consiguió ese resultlado",
+    title = "Comparación de resultados en carrera entre Renault y McLaren",
+    subtitle = "Temporada 2005"
+  ) +
+  theme_classic()
+
+g14
+
+```
+
+```{r, eval = TRUE, echo = FALSE}
+#Gráfico comparando los retiros entre Mclaren y Renault
+RyM_1 <- MyR_2005 %>%
+  pivot_wider(names_from = Constructor, values_from = Status) %>%
+  count(Renault) %>%
+  na.omit()
+
+RyM_2 <- MyR_2005 %>%
+  pivot_wider(names_from = Constructor, values_from = Status) %>%
+  count(McLaren) %>%
+  na.omit()
+
+g15 <- ggplot(RyM_1) +
+  aes(x = Renault, y = n) +
+  geom_col(fill = "#00E3FF") +
+  labs(
+    x = "Estatus final carrera",
+    y = "Numero de veces",
+    title = "Resultados finales de Renault",
+    subtitle = "Temporada 2005"
+  ) +
+  theme_classic()
+
+g16 <- ggplot(RyM_2) +
+  aes(x = McLaren, y = n) +
+  geom_col(fill = "black") +
+  labs(
+    x = "Estatus final carrera",
+    y = "Numero de veces",
+    title = "Resultados finales de McLaren",
+    subtitle = "Temporada 2005"
+  ) +
+  theme_classic()
+
+g17 <- (g15 | g16)
+
+g17
+
+```
+
+<br> 
+
+
+
+
+De nuevo, observamos que, pese a los resultados bastante igualados, incluso pese a tener más victorias que Renault, el calvario de McLaren y los fallos mecánicos fueron claves en la resolución de este campeonato también. 
+
+Por último, comparamos la aportación de cada piloto al total de puntos de su escudería.
+
+<br> 
+
+
+
+```{r, eval = TRUE, echo = FALSE}
+#Aportación de cada piloto al total de puntos de su escudería 
+t3 <- data_2005 %>%
+  select(Round, `GP Name`, Driver, Constructor, `Cumulative points`, `Cumulative Constructor points`)%>%
+  filter(Round == 19) %>%
+  mutate(Aportacion_Constructor = (`Cumulative points`/`Cumulative Constructor points`)*100)%>%
+  arrange(desc(Aportacion_Constructor)) %>%
+  select( Driver, Constructor, `Cumulative points`, `Cumulative Constructor points`, Aportacion_Constructor )
+
+DT::datatable(t3)
+
+```
+
+Como vemos, Alonso fue el segundo piloto que más puntos aportó a su equipo, siendo un 70% culpable también del campeonato de constructores de Renault. 
+
+<br> 
+<br> 
+
+
+
+## Fun facts de la temporada
+Pedro de la Rosa, por entonces piloto probador de McLaren, disputó el Gran Premio de Bahréin sustituyendo a Montoya por un problema del colombiano. Bien, pues Pedro consiguió hacer la vuelta rápida de la carrera, récord que a día de hoy todavía mantiene en esa pista.
+
+<br> 
+
+
+```{r, eval = TRUE, echo = FALSE}
+###Funfact
+t2 <- data_2005 %>%
+  select(`GP Name`, Driver, Year, fastestLapTime)%>%
+  filter(`GP Name` == "Bahrain Grand Prix") %>%
+  filter(fastestLapTime > 0) %>%
+  arrange(fastestLapTime) %>%
+  slice(c(1:5))
+
+DT::datatable(t2)
+
+```
+
+<br> 
+<br> 
+
+```{r, eval = TRUE, echo = FALSE}
+t8 <- data_f1 %>%
+  select(`GP Name`, Driver, Year, fastestLapTime)%>%
+  filter(`GP Name` == "Bahrain Grand Prix") %>%
+  filter(Year >= "2005") %>%
+  filter(fastestLapTime > 0) %>%
+  arrange(fastestLapTime) %>%
+  slice(c(1:10))
+
+DT::datatable(t8)
+
+```
+
+<br> 
+
+
+</center>![Epico x2](./imagenes/Imagen_3.jpg){width="600" height="400"}</center>
+
+<br> 
+
+
+Primer extra. Celebración de Alonso cuando ganó su primer título, el famoso [“¡Siiii, tomaaaa, vamos!”](https://www.youtube.com/watch?v=LZdy8EvRmu0){target="_blank"}.
+
+<br> 
+
+Otro extra. [Fernando cantando We’re the Champions](https://www.youtube.com/watch?v=7_7jz7td0OM){target="_blank"} después de ganar ambos títulos por primera vez con Renault.
+
+<br> 
+<br> 
+<br>
+
+# 2006. Hay un nuevo rey en la pista, Michael
+Después de una eufórica temporada 2005, de éxito para algunos, y de frustración y decepción para muchos otros, la nueva temporada se planteaba de nuevo muy interesante, con varios contendientes dispuestos a pelear hasta el final por el campeonato. De un lado, Fernando y Renault para defender el título. Por otro, un Kimi y McLaren con la esperanza de haber solucionado los problemas del año anterior, y también Ferrari con un Schumacher que, lejos de verse satisfecho con sus 7 títulos, buscaba un último para aumentar más aún su palmarés de leyenda y retirarse siendo octacampeón.
+
+Así, todo estaba preparado para otra batalla emocionante, que en este caso se desarrollaría dentro de la pista y que dejó la imagen de una gran leyenda “retirada” por un joven español con un mucho talento y determinación. La máquina que utilizó en esta ocasión fue esta bestia, llamada R26. No son muy ingeniosos con el nombre los de Renault.
+
+<center>
+
+**EL R26**
+
+</center>![Tremendo avión](./imagenes/Imagen_4.jpg){width="600" height="400"}</center>
+
+<br> 
+<br>
+
+
+## Campeonato de pilotos
+Al igual que hemos hecho con la temporada anterior, veremos un par de gráficos que marcan la evolución de la puntuación del campeonato de pilotos para la temporada 2006. 
+
+<br> 
+
+
+```{r, eval = TRUE, echo = FALSE}
+#2006
+
+##Pilotos
+
+#En primer lugar, filtraremos el dataset para filtrar los datos de la temporada 2005 y nos quedaremos con aquellos parámetros que más nos interesen
+
+data_2006 <- data_f1 %>%
+  filter(Year == "2006") %>%
+  select(Year, Round, `GP Name`, Driver, `Driver Nationality`, Constructor, grid, positionText, positionOrder, points, time, fastestLapTime, rank, Status, `Cumulative points`, `Cumulative Constructor points`, `Constructor Rank`) %>%
+  arrange(Round)
+
+
+#Gráfico con la evolución de los pilotos a lo largo de la temporada
+
+g18 <- data_2006 %>%
+  ggplot(aes(x = Round, y = `Cumulative points`, color = Driver))+
+  geom_line(linewidth = 1)+
+  geom_point(aes(group = seq_along(Round)), size = 2)+
+  scale_color_manual(values= c("#85ddff", "#fffdfe", "#545f75", "#151c33", "#7c8faf", "#de1922", "#ea2634", "#fffdfe", "#c1a784", "#2c2e2d", "#329ee1", "#ea2634", "#545f75", "#151c33", "#7c8faf", "#de1922", "#62b2bb", "#fc3c60", "#283955", "#fc3c60", "#7c8faf", "#fc3c60", "#747d82", "#c1a784", "#545f75", "#62b2bb", "#62b2bb"),
+                     labels = c("ALONSO",
+                                "BARRICHELLO",
+                                "COULTHARD",
+                                "WEBBER",
+                                "MONTOYA",
+                                "TRULLI",
+                                "MASSA",
+                                "BUTTON",
+                                "SPEED",
+                                "MONTEIRO",
+                                "FISICHELLA",
+                                "MICHAEL_SCHUMACHER",
+                                "KLIEN",
+                                "ROSBERG",
+                                "RAIKKONEN",
+                                "RALF_SCHUMACHER",
+                                "VILLENEUVE",
+                                "SATO",
+                                "ALBERS",
+                                "IDE",
+                                "ROSA",
+                                "MONTAGNY",
+                                "YAMAMOTO",
+                                "LIUZZI",
+                                "DOORNBOS",
+                                "HEIDFELD",
+                                "KUBICA"))+
+  
+  #Los segmentos que van a unir nuestras líneas con las anotaciones:
+  geom_segment(aes(xend = 18, yend = `Cumulative points`),
+               linetype = 2, colour = 'grey') +
+  
+  #Las anotaciones:
+  geom_text(aes(label = Driver), hjust = 0)+
+  guides(color = "none")+
+  scale_x_continuous(breaks = seq(1, 18, by = 1),
+                     limits = c(1, 19))+
+  xlab("")+
+  ylab("")+
+  ggtitle("Evolución del campeonato de pilotos 2006",
+          subtitle = "Puntos totales por piloto")+
+  theme_minimal()+
+  
+  #Agrandando el texto para adaptarlo al gif:
+  
+  theme(plot.title = element_text(size = 15),
+        plot.subtitle = element_text(size = 12),
+        axis.text.x = element_text(size = 10),
+        plot.caption = element_text(size = 10, color = "grey40")) +
+  
+  #Animación:
+  
+  transition_reveal(Round)+
+  coord_cartesian(clip = 'off') +
+  enter_fade() +
+  exit_shrink()+
+  view_follow()
+
+#Animando el objeto de ggplot:
+
+animate(g18)
+
+```
+
+<br> 
+
+
+```{r, eval = TRUE, echo = FALSE}
+#También haremos uno estático
+g19 <- data_2006 %>%
+  ggplot(aes(x = Round, y = `Cumulative points`, color = Driver))+
+  geom_line(linewidth = 1)+
+  geom_point(aes(group = seq_along(Round)), size = 2)+
+  scale_color_manual(values= c("#85ddff", "#fffdfe", "#545f75", "#151c33", "#7c8faf", "#de1922", "#ea2634", "#fffdfe", "#c1a784", "#2c2e2d", "#329ee1", "#ea2634", "#545f75", "#151c33", "#7c8faf", "#de1922", "#62b2bb", "#fc3c60", "#283955", "#fc3c60", "#7c8faf", "#fc3c60", "#747d82", "#c1a784", "#545f75", "#62b2bb", "#62b2bb"),
+                     labels = c("ALONSO",
+                                "BARRICHELLO",
+                                "COULTHARD",
+                                "WEBBER",
+                                "MONTOYA",
+                                "TRULLI",
+                                "MASSA",
+                                "BUTTON",
+                                "SPEED",
+                                "MONTEIRO",
+                                "FISICHELLA",
+                                "MICHAEL_SCHUMACHER",
+                                "KLIEN",
+                                "ROSBERG",
+                                "RAIKKONEN",
+                                "RALF_SCHUMACHER",
+                                "VILLENEUVE",
+                                "SATO",
+                                "ALBERS",
+                                "IDE",
+                                "ROSA",
+                                "MONTAGNY",
+                                "YAMAMOTO",
+                                "LIUZZI",
+                                "DOORNBOS",
+                                "HEIDFELD",
+                                "KUBICA")) +
+  gghighlight::gghighlight(Driver %in% c("ALONSO", "RAIKKONEN", "MICHAEL_SCHUMACHER", "FISICHELLA", "MASSA"))+
+  guides(color = "none")+
+  scale_x_continuous(breaks = seq(1, 18, by = 1),
+                     limits = c(1, 18))+
+  xlab("")+
+  ylab("")+
+  ggtitle("Evolución del campeonato de pilotos 2006",
+          subtitle = "Puntos totales por piloto")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 15),
+        plot.subtitle = element_text(size = 12),
+        axis.text.x = element_text(size = 10),
+        plot.caption = element_text(size = 10, color = "grey40")) +
+  theme_classic() 
+
+
+ggplotly(g19)
+
+```
+
+<br> 
+
+
+Como podemos observar, esta temporada tan solo hubo dos claros contendientes al título de nuevo, Fernando Alonso y Michael Schumacher. De hecho, podemos ver que llegaban igualados a la penúltima carrera, pero que parece que un giro dramático de los acontecimientos acabó decantando el mundial en el lado del español. 
+
+A continuación, de nuevo veremos una comparación de cómo fueron las cosas con Fisichella, y posteriormente veremos datos de la batalla con el Káiser, que este año sí vivimos una lucha directa en la pista. Por tanto, veremos quién tenía realmente el coche más rápido y cuáles fueron las claves en la lucha por la gloria.
+
+<br> 
+
+
+
+### Fisichella, de nuevo “Fernando is faster” y un año para olvidar
+El piloto italiano venía de la temporada pasada viendo como su compañero de equipo le dio un repaso monumental, constantemente quedando por delante de él, y además ganando el campeonato con el mismo coche. Si bien su desempeño acabó ayudando al equipo a llevarse el campeonato de constructores, parecía que no llegó a exprimir del todo ese coche. Veamos los resultados de esta temporada entre ambos compañeros.
+
+<br> 
+
+
+```{r, eval = TRUE, echo = FALSE}
+##Fisichella
+FyF_2006 <- data_2006 %>%
+  filter(Driver %in% c("FISICHELLA", "ALONSO"))
+
+
+#En primer lugar haremos un gráfico de barras comparando el número de veces en qué han quedado en cada posición
+
+g20 <- ggplot(FyF_2006) +
+  aes(x = positionOrder, colour = Driver) +
+  geom_histogram(bins = 30L, fill = "#112446") +
+  scale_color_manual(
+    values = c(ALONSO = "#00FFEF",
+               FISICHELLA = "#F0F921")
+  ) +
+  labs(
+    x = "Posición en carrera",
+    y = "Número de veces que se consiguió ese resultlado",
+    title = "Comparación de resultados en carrera entre Fisichella y Alonso",
+    subtitle = "Temporada 2006"
+  ) +
+  theme_classic()
+
+g20
+
+```
+
+<br> 
+
+
+Como podemos observar, de nuevo Alonso fue muy superior respecto a Fisichella, que apenas estuvo en los escalones del podio 5 veces al largo de toda la temporada, y que constantemente se vio superado por los dos coches de Ferrari, e incluso el McLaren de Kimi, todo y que este año ese coche no tenía nada que ver con el del anterior campeonato. 
+
+<br> 
+
+
+```{r, eval = TRUE, echo = FALSE}
+#Gráfico marcando las diferencias de tiempo en cada circuito
+
+g21 <- FyF_2006 %>%
+  filter(Status %in% c("Finished")) %>%
+  ggplot() +
+  aes(x = Round, y = fastestLapTime, colour = Driver) +
+  geom_point(fill = "#112446") +
+  scale_color_manual(
+    values = c(ALONSO = "#00F4FF",
+               FISICHELLA = "#FFE709")) +
+  labs(
+    x = "Carrera",
+    y = "Tiempo de vuelta rápida en carrera",
+    title = "Diferencia de tiempo de vuelta rápida entre Fisichella y Alonso",
+    subtitle = "Temporada 2006") +
+  theme_bw()
+
+g21
+
+```
+
+<br> 
+
+```{r, eval = TRUE, echo = FALSE}
+#Tabla para ver las diferencias de tiempos
+
+t4 <- FyF_2006 %>%
+  select(`GP Name`, Driver, fastestLapTime) %>%
+  pivot_wider(names_from = Driver, values_from = fastestLapTime) %>%
+  dplyr::relocate(FISICHELLA, .after = ALONSO) #%>%
+#mutate(ALONSO = as.(ALONSO)) %>%
+#mutate(FISICHELLA = as.(FISICHELLA)) %>%
+#mutate(Diferencia_tiempo = ALONSO-FISICHELLA)
+
+DT::datatable(t4)
+
+```
+
+<br> 
+
+
+Las diferencias también se denotan en las vueltas rápidas, donde de nuevo Fernando fue constantemente más rápido, la cual cosa nos indica que su ritmo de carrera fue superior al de su compañero, y eso marcó las diferencias entre ambos pilotos. Posteriormente volveremos a comparar la aportación de puntos de los pilotos al total de su equipo, pero la conclusión es que de nuevo Alonso fue notablemente superior a Fisichella. Superioridad que en este caso no se explica de otra forma que con las manos y el talento del piloto asturiano para sacar lo mejor de cada coche que pilota.
+
+<br> 
+
+
+### El Káiser, derrotado en batalla, y el campeón mantiene su corona
+Como hemos visto, la temporada 2006 acabó siendo una lucha a dos por el título del campeonato. Los protagonistas de la hazaña fueron Fernando Alonso, el nuevo número 1 de la parrilla con su Renault, y Michael Schumacher, que después de un mal año volvía a la carga con su Ferrari dispuesto a recuperar la corona y retirarse en lo más alto.
+
+Como hicimos en la temporada anterior con los dos contendientes al título, analizaremos algunos datos para determinar si a algún piloto le sonrió la suerte y su coche era superior, o fue cuestión de méritos y constancia los resultados obtenidos por ambos.
+
+En primer lugar, compararemos la velocidad de los coches de ambas escuderías a lo largo de la temporada.
+
+<br> 
+
+
+
+```{r, eval = TRUE, echo = FALSE}
+###Schumacher
+
+FyFyMyM_2006 <- data_2006 %>%
+  filter(Driver %in% c("FISICHELLA", "ALONSO", "MASSA", "MICHAEL_SCHUMACHER"))
+
+
+#Gráfico marcando las diferencias de tiempo en cada circuito
+g22 <- FyFyMyM_2006 %>%
+  ggplot() +
+  aes(x = Round, y = fastestLapTime, colour = Driver) +
+  geom_point(fill = "#112446") +
+  scale_color_manual(
+    values = c(ALONSO = "#00FFEF",
+               FISICHELLA = "#F0F921",
+               MASSA = "grey",
+               MICHAEL_SCHUMACHER = "red")
+  ) +
+  labs(
+    x = "Carrera",
+    y = "Tiempo de vuelta rápida en carrera",
+    title = "Diferencia de tiempo de vuelta rápida entre Renault y Ferrari",
+    subtitle = "Temporada 2006") +
+  theme_bw()
+
+g22
+
+```
+
+<br> 
+
+
+Así pues, vemos que al principio de la temporada el Renault, especialmente el de Alonso, era el más rápido. No obstante, lo que podemos ver es que a medida que avanzaba la temporada esta tendencia se revertió, y fue el coche del Cavallino Rampante el que constantemente consiguió mejores tiempos de carrera. Por tanto, concluimos que todo y que los franceses tenían un coche más rápido al principio de la temporada, la realidad es que las evoluciones de Ferrari al largo del campeonato tuvieron éxito, convirtiéndolo en el coche más rápido.
+
+De hecho, compararemos la evolución de los resultados entre Schumacher y Alonso al largo de la temporada con un gráfico
+
+<br> 
+
+```{r, eval = TRUE, echo = FALSE}
+#Evolución de los resultados de Schumacher y Alonso
+g23 <- FyFyMyM_2006 %>%
+  filter(Driver %in% c("ALONSO", "MICHAEL_SCHUMACHER")) %>%
+  ggplot() +
+  aes(x = Round, y = positionOrder, colour = Driver, label = `GP Name`, label2 = `Cumulative points`) +
+  geom_point(shape = "circle", size = 1.5) +
+  scale_color_manual(
+    values = c(ALONSO = "#00FFFC",
+               FISICHELLA = "#721F81",
+               MASSA = "#F1605D",
+               MICHAEL_SCHUMACHER = "#FF0000")
+  ) +
+  labs(
+    x = "Carrera",
+    y = "Resultado en carrera",
+    title = "Evolución de los resultados en carrera de Schumacher y Alonso",
+    subtitle = "Temporada 2006") +
+  theme_classic() +
+  ylim(20, 1)
+
+ggplotly(g23, tooltip = c("label", "positionOrder", "label2"))
+
+```
+
+<br> 
+
+
+Este gráfico, que compara la evolución de los resultados en carrera entre ambos pilotos, nos deja entrever lo que decíamos con anterioridad. Y es que, excepto en un par de ocasiones, al principio de temporada es Alonso el que está por delante del piloto alemán, mientras que a partir de cierto punto del campeonato es Schumacher el que se pone por delante del piloto de Renault. Por tanto, podemos afirmar que, a falta de observar otros datos, en este caso los coches fueron determinantes en la consecución de los resultados, y que a pesar de ser ambos grandes pilotos fue la evolución de sus máquinas las que marcaron el campeonato. 
+
+Así pues, veremos los resultados en carrera de cada uno agrupados, y también si alguno tuvo más abandonos en carrera que el otro. En fin, buscar si hubo un determinante externo que nos indique que realmente este título no se ganó en la pista. 
+
+<br> 
+
+```{r, eval = TRUE, echo = FALSE}
+#Gráfico comparando los resultados entre Schumacher y Alonso
+FyM_2006 <- data_2006 %>%
+  filter(Driver %in% c("ALONSO","MICHAEL_SCHUMACHER"))
+
+g24<- ggplot(FyM_2006) +
+  aes(x = positionOrder, colour = Driver) +
+  geom_histogram(bins = 30L, fill = "#112446") +
+  scale_color_manual(
+    values = c(ALONSO = "#00FFEF",
+               MICHAEL_SCHUMACHER = "red")
+  ) +
+  labs(
+    x = "Posición en carrera",
+    y = "Número de veces que se consiguió ese resultlado",
+    title = "Comparación de resultados en carrera entre Schumacher y Alonso",
+    subtitle = "Temporada 2006"
+  ) +
+  theme_classic()
+
+g24
+
+```
+
+```{r, eval = TRUE, echo = FALSE}
+#Gráfico comparando los retiros entre Kimi y Alonso
+FyM_1 <- FyM_2006 %>%
+  pivot_wider(names_from = Driver, values_from = Status) %>%
+  count(ALONSO) %>%
+  na.omit()
+
+FyM_2 <- FyM_2006 %>%
+  pivot_wider(names_from = Driver, values_from = Status) %>%
+  count(MICHAEL_SCHUMACHER) %>%
+  na.omit()
+
+g25 <- ggplot(FyM_1) +
+  aes(x = ALONSO, y = n) +
+  geom_col(fill = "#00E3FF") +
+  labs(
+    x = "Estatus final carrera",
+    y = "Numero de veces",
+    title = "Resultados de carrera de Alonso",
+    subtitle = "Temporada 2006"
+  ) +
+  theme_classic()
+
+g26 <- ggplot(FyM_2) +
+  aes(x = MICHAEL_SCHUMACHER, y = n) +
+  geom_col(fill = "red") +
+  labs(
+    x = "Estatus final carrera",
+    y = "Numero de veces",
+    title = "Resultados de Schumacher",
+    subtitle = "Temporada 2006"
+  ) +
+  theme_classic()
+
+g27 <- (g25 | g26)
+
+g27
+
+```
+
+<br> 
+
+
+Lo que vemos en los gráficos es que, una vez más, se observa una igualdad tremenda entre ambos pilotos a lo largo de la temporada, tanto en resultados como en suerte de carrera. No obstante, sí que observamos en el segundo gráfico una diferencia. Y es que Schumacher tuvo un retiro más. Pero ¿fue este retiro tan determinante como para remarcarlo? Pues, todo y que Alonso también se retiró en alguna ocasión yendo primero, en este caso sí. Veámoslo brevemente en esta tabla.
+
+<br> 
+
+
+
+```{r, eval = TRUE, echo = FALSE}
+#Resultados GP Japón
+t5 <- FyM_2006 %>%
+  filter(`GP Name` %in% c("Chinese Grand Prix", "Japanese Grand Prix")) %>%
+  filter(Driver %in% c("ALONSO","MICHAEL_SCHUMACHER")) %>%
+  select(`GP Name`, Round, Driver, grid, positionText, Status, `Cumulative points`)
+
+
+DT::datatable(t5)
+
+```
+
+<br> 
+
+
+Como podemos ver, a la penúltima carrera del campeonato (Japón), llegaban ambos pilotos empatados a puntos. No obstante, mientras Schumacher lideraba la carrera, rompió motor, teniendo que retirarse y sirviéndole en bandeja la victoria aquel día a Alonso, que rodaba segundo, y también el campeonato, dado que llegaría a la última carrera con el único requisito de quedar octavo para asegurarse el título de campeón.
+
+En definitiva, como hemos podido ver, todo y ver en la pista una lucha encarnizada entre ambas escuderías y pilotos, al final de nuevo quién decanto la balanza entre uno y otro fue la suerte del campeón. No obstante, cabe recalcar con la clase y firmeza que enfrentó un joven de 25 años una batalla que a lo largo de la temporada se fue haciendo cada vez más cuesta arriba frente a todo un siete veces campeón del mundo. Así, Alonso fue capaz de administrar la ventaja que consiguió en las primeras carreras y tuvo la constancia suficiente para aprovechar todas las oportunidades de rascar más puntos que se le presentaron a lo largo de la temporada. 
+
+Todo y que el año anterior no tuvo un coche a la altura, Michael demostró que seguía en plena forma para luchar, pero no pudo hacer nada contra el joven asturiano, que demostró de todo lo que fue capaz y lograr un hito que pocos han conseguido: derrotar al Káiser. Y no solo eso, además, con una maquinaria inferior durante gran parte de la temporada.  
+
+<br> 
+<br> 
+
+
+
+## Campeonato de constructores
+De nuevo, veremos brevemente el campeonato de constructores. En primer lugar, dos gráficos que muestra la evolución de los puntos de los equipos.
+
+<br> 
+
+```{r, eval = TRUE, echo = FALSE}
+#CONSTRUCTORES
+
+#Gráfico con la evolución de los constructores a lo largo de la temporada
+
+g28 <- data_2006 %>%
+  ggplot(aes(x = Round, y = `Cumulative Constructor points`, color = Constructor))+
+  geom_line(linewidth = 1)+
+  geom_point(aes(group = seq_along(Round)), size = 2)+
+  scale_color_manual(values= c("#85ddff", "#ea2634", "#545f75", "#151c33", "#7c8faf", "#de1922", "#62b2bb", "#c1a784", "#283955", "#fcdf55", "#747d82", "#fcdf55"),
+                     labels = c("Renault",
+                                "Ferrari",
+                                "Red Bull",
+                                "Williams",
+                                "McLaren",
+                                "Toyota",
+                                "BMW Sauber",
+                                "Honda",
+                                "Toro Rosso",
+                                "MF1",
+                                "Super Aguri",
+                                "Spyker MF1"))+
+  
+  #Los segmentos que van a unir nuestras líneas con las anotaciones:
+  geom_segment(aes(xend = 18, yend = `Cumulative Constructor points`),
+               linetype = 2, colour = 'grey') +
+  
+  #Las anotaciones:
+  geom_text(aes(label = Constructor), hjust = 0)+
+  guides(color = "none")+
+  scale_x_continuous(breaks = seq(1, 18, by = 1),
+                     limits = c(1, 18))+
+  xlab("")+
+  ylab("")+
+  ggtitle("Evolución del campeonato de constructores 2006",
+          subtitle = "Puntos totales por constructor")+
+  theme_minimal()+
+  
+  #Agrandando el texto para adaptarlo al gif:
+  
+  theme(plot.title = element_text(size = 15),
+        plot.subtitle = element_text(size = 12),
+        axis.text.x = element_text(size = 10),
+        plot.caption = element_text(size = 10, color = "grey40")) +
+  
+  #Animación:
+  
+  transition_reveal(Round)+
+  coord_cartesian(clip = 'off') +
+  enter_fade() +
+  exit_shrink()+
+  view_follow()
+
+#Animando el objeto de ggplot:
+
+animate(g28)
+
+```
+
+<br> 
+
+```{r, eval = TRUE, echo = FALSE}
+#También haremos uno estático
+g29 <- data_2006 %>%
+  ggplot(aes(x = Round, y = `Cumulative Constructor points`, color = Constructor))+
+  geom_line(linewidth = 1)+
+  geom_point(aes(group = seq_along(Round)), size = 2)+
+  scale_color_manual(values= c("#85ddff", "#ea2634", "#545f75", "#151c33", "#7c8faf", "#de1922", "#62b2bb", "#c1a784", "#283955", "#fcdf55", "#747d82", "#fcdf55"),
+                     labels = c("Renault",
+                                "Ferrari",
+                                "Red Bull",
+                                "Williams",
+                                "McLaren",
+                                "Toyota",
+                                "BMW Sauber",
+                                "Honda",
+                                "Toro Rosso",
+                                "MF1",
+                                "Super Aguri",
+                                "Spyker MF1"))+
+  gghighlight::gghighlight(Constructor %in% c("Renault", "Ferrari", "McLaren"))+
+  guides(color = "none")+
+  scale_x_continuous(breaks = seq(1, 18, by = 1),
+                     limits = c(1, 18))+
+  xlab("")+
+  ylab("")+
+  ggtitle("Evolución del campeonato de constructores 2006",
+          subtitle = "Puntos totales por constructor")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 15),
+        plot.subtitle = element_text(size = 12),
+        axis.text.x = element_text(size = 10),
+        plot.caption = element_text(size = 10, color = "grey40")) +
+  theme_classic() 
+
+
+ggplotly(g29)
+
+```
+
+<br> 
+
+
+Como podemos ver, la lucha este año fue de nuevo entre dos constructores, y además tremendamente disputada. No obstante, acabó decidiéndose en la última carrera para los franceses. Eso sí, por los pelos, eh. 
+
+Analicemos también los resultados y retiros de carrera de cada escudería.
+
+<br> 
+
+
+```{r, eval = TRUE, echo = FALSE}
+#Gráfico de los resultados de carrera
+
+#Gráfico comparando los resultados entre Renault y McLaren
+FyR_2006 <- data_2006 %>%
+  filter(Constructor %in% c("Ferrari","Renault"))
+
+g30 <- ggplot(FyR_2006) +
+  aes(x = positionOrder, colour = Constructor) +
+  geom_histogram(bins = 30L, fill = "#112446") +
+  scale_color_manual(
+    values = c(Renault = "#00FFEF",
+               Ferrari = "red")
+  ) +
+  labs(
+    x = "Posición en carrera",
+    y = "Número de veces que se consiguió ese resultlado",
+    title = "Comparación de resultados en carrera entre Renault y Ferrari",
+    subtitle = "Temporada 2006"
+  ) +
+  theme_classic()
+
+g30
+
+```
+
+
+<br> 
+
+En este primer gráfico observamos igualdad máxima entre ambas escuderías. No obstante, Renault sí que consiguió cosechar algún resultado más en el top4 y top5 que probablemente ayudó a decantar el campeonato de su lado.
+
+<br> 
+
+
+```{r, eval = TRUE, echo = FALSE}
+#Gráfico comparando los retiros entre Ferrari y Renault
+FyR_1 <- FyR_2006 %>%
+  pivot_wider(names_from = Constructor, values_from = Status) %>%
+  count(Renault) %>%
+  na.omit()
+
+FyR_2 <- FyR_2006 %>%
+  pivot_wider(names_from = Constructor, values_from = Status) %>%
+  count(Ferrari) %>%
+  na.omit()
+
+g31 <- ggplot(FyR_1) +
+  aes(x = Renault, y = n) +
+  geom_col(fill = "#00E3FF") +
+  labs(
+    x = "Estatus final carrera",
+    y = "Numero de veces",
+    title = "Resultados de carrera de Renault",
+    subtitle = "Temporada 2006"
+  ) +
+  theme_classic()
+
+g32<- ggplot(FyR_2) +
+  aes(x = Ferrari, y = n) +
+  geom_col(fill = "red") +
+  labs(
+    x = "Estatus final carrera",
+    y = "Numero de veces",
+    title = "Resultados de carrera de Ferrari",
+    subtitle = "Temporada 2006"
+  ) +
+  theme_classic()
+
+g33 <- (g31 | g32)
+
+g33
+
+```
+
+<br> 
+
+
+En el segundo, tampoco vemos grandes diferencias, salvo un retiro más por parte de los italianos. Por tanto, podemos decir que de nuevo se ganó este mundial también en la pista, al igual que el de pilotos.
+
+Por último, viendo las aportaciones de cada piloto al total de puntos de su escudería, se repite la misma historia en el caso de Alonso. Fue él el que aportó una gran cantidad de puntos al equipo, claves para ganar un campeonato que además este año estuvo mucho más apretado. De hecho, la falta de forma de Fisichella no solo estuvo a punto de costarles el campeonato de constructores, sino que a Alonso también casi le cuesta el de pilotos, dado que en este caso Massa, escudero de Schumacher, rindió fenomenalmente quedando en algunas ocasiones por delante de Fernando para restarle puntos. Por tanto, era una batalla prácticamente de 2 vs 1, aunque aún así y todo acabo saliendo victorioso Fernando y Renault en las dos.
+
+<br> 
+
+
+```{r, eval = TRUE, echo = FALSE}
+#Aportación de cada piloto al total de puntos de su escudería 
+t6 <- data_2006 %>%
+  select(Round, `GP Name`, Driver, Constructor, `Cumulative points`, `Cumulative Constructor points`)%>%
+  filter(Round == 18) %>%
+  mutate(Aportacion_Constructor = (`Cumulative points`/`Cumulative Constructor points`)*100)%>%
+  arrange(desc(Aportacion_Constructor)) %>%
+  select( Driver, Constructor, `Cumulative points`, `Cumulative Constructor points`, Aportacion_Constructor )
+
+DT::datatable(t6)
+
+```
+
+
+<br> 
+<br> 
+
+
+## Fun facts de la temporada
+En este caso hay dos imágenes muy bonitas que me gustaría compartir.
+
+La primera de ellas es, de nuevo, de Pedro de la Rosa, nuestro estimado comentarista, que ese año no lo fue tanto dado que sustituyó por media temporada a Montoya. Y, en ese tiempo, pese a no tener McLaren el coche del año pasado llegó a conseguir su primer y único podio en la Fórmula 1, logro que pocos españoles han llegado a conseguir. ¡Y estuvo incluso a punto de ganar la carrera!
+
+<br> 
+
+
+```{r, eval = TRUE, echo = FALSE}
+ ###Funfact
+t7 <- data_2006 %>%
+  select(`GP Name`, Driver, Constructor, positionOrder)%>%
+  filter(`GP Name` == "Hungarian Grand Prix") %>%
+  arrange(positionOrder) %>%
+  slice(c(1:5))
+
+DT::datatable(t7)
+
+```
+
+<br> 
+
+
+Una pena que [Ron Dennis](https://es.wikipedia.org/wiki/Ron_Dennis){target="_blank"} (jefe de McLaren en esa época) no decidiese darle el asiento para el año siguiente. En cambio, decidió dárselo a un tal [Lewis Hamilton](https://es.wikipedia.org/wiki/Lewis_Hamilton){target="_blank"} , y ya sabemos cómo acabó esa historia ([Spoiler: muy mal, especialmente para Alonso](https://es.motorsport.com/f1/news/exmecanico-mclaren-2007-hamilton-alonso/10306583/){target="_blank"}). Pero eh, ¡qué bonito hubiese sido ver a dos españoles en el mismo equipo, eh Antonio!
+
+<br> 
+
+</center>![Lo de este tío hay que analizarlo](./imagenes/Imagen_5.jpg){width="600" height="700"}</center>
+
+<br> 
+
+La otra imagen, más que una imagen, es un vídeo. Del nano, en la última carrera, [radio de despedida](https://www.youtube.com/watch?v=VfpnbHu_h-Y){target="_blank"} después de ganar ambos títulos y antes de marcharse en la temporada siguiente a otro equipo. Probablemente el último momento donde Alonso fue tan feliz dentro de una pista :’)
+
+<br> 
+
+
+Como contenido extra, este [vídeo](https://www.youtube.com/watch?v=dc9kHyBaq9U){target="_blank"} tan gracioso de [Albert Fàbrega](https://twitter.com/AlbertFabrega){target="_blank"} cuando todavía era mecánico en Super Aguri. Tremenda empanada que llevaban todos, y pobret va el cámara y le enfoca justo a él
+
+<br> 
+<br> 
+<br> 
+
+
+
+# Conclusiones del trabajo
+Este tío es mi padre. Y se la pela
+
+<center>
+
+**Los pasos prohibidos**
+
+</center>![Brutal](./imagenes/Imagen_6.gif){width="600" height="400"}</center>
+
+
+<center>
+
+**Todo bajo control para la temporada 2023 (Se viene el tercero)**
+
+</center>![Más Brutal](./imagenes/Imagen_7.gif){width="600" height="400"}</center>
+
+<center>
+
+<br> 
+
+**Hasta aquí mi trabajo. ¡Espero que os haya gustado (y que Pedro me ponga un 10)!**
+
+</center>![Muac](./imagenes/Imagen_8.gif){width="600" height="600"}</center>
+
+<br> 
+<br> 
+<br> 
+
+# Información sobre la sesión
+
+Abajo muestro mi entorno de trabajo y paquetes utilizados
+
+```{r}
+#| echo: false
+sessioninfo::session_info() %>% 
+  details::details(summary = 'current session info') 
+```
+
+
+
